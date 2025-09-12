@@ -1,0 +1,47 @@
+.weather-widget {
+  position: absolute;
+  top: 80px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 200px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.weather-widget h3 {
+  margin-bottom: 10px;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 5px;
+}
+
+.weather-widget p {
+  margin: 8px 0;
+  color: #34495e;
+}
+
+.weather-widget h3{
+    margin-top: 0;
+}
+
+/* Animation for weather data */
+@keyframes fadeIn {
+  from { 
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.weather-widget {
+  animation: fadeIn 0.5s ease forwards;
+}
