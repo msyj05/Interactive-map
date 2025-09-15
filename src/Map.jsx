@@ -100,10 +100,10 @@ function Map() {
             />
           </LayersControl.BaseLayer>
 
-          <LayersControl.BaseLayer name="Satellite">
+          <LayersControl.BaseLayer name="Terrain">
             <TileLayer
               attribution='&copy; Stadia Maps, &copy; OpenMapTiles &copy; OpenStreetMap contributors'
-              url='https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg'
+              url='https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg'
             />
           </LayersControl.BaseLayer>
 
