@@ -100,17 +100,17 @@ function Map() {
             />
           </LayersControl.BaseLayer>
 
-          <LayersControl.BaseLayer name="Terrain">
-            <TileLayer
-              attribution='&copy; Stadia Maps, &copy; OpenMapTiles &copy; OpenStreetMap contributors'
-              url='https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.jpg'
-            />
-          </LayersControl.BaseLayer>
-
           <LayersControl.BaseLayer name="OpenTopoMap">
             <TileLayer
               attribution='OpenTopoMap'
               url='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+            />
+          </LayersControl.BaseLayer>
+
+          <LayersControl.BaseLayer name="CartoDB Dark">
+            <TileLayer
+              attribution='&copy; CartoDB contributors'
+              url='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
             />
           </LayersControl.BaseLayer>
         </LayersControl>
