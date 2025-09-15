@@ -11,10 +11,8 @@ body {
   height: calc(100vh - 140px);
 }
 
-.layers-control {
-  position: absolute;
-  top: 80px;
+.leaflet-control-layers {
+  margin-top: 50px !important;
 }
-
 
 

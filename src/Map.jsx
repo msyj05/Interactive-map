@@ -92,7 +92,7 @@ function Map() {
       >
         <MapController position={selectedPosition} />
 
-        <LayersControl position='bottomright'>
+        <LayersControl position='topright' className='layers-control'>
           <LayersControl.BaseLayer checked name="OpenStreetMap">
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
