@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import SearchBar from './SearchBar.jsx';
@@ -92,10 +92,28 @@ function Map() {
       >
         <MapController position={selectedPosition} />
 
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
+        <LayersControl position='bottomright'>
+          <LayersControl.BaseLayer checked name="OpenStreetMap">
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; OpenStreetMap contributors'
+            />
+          </LayersControl.BaseLayer>
+
+          <LayersControl.BaseLayer name="Satellite">
+            <TileLayer
+              attribution='&copy; Stadia Maps, &copy; OpenMapTiles &copy; OpenStreetMap contributors'
+              url='https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg'
+            />
+          </LayersControl.BaseLayer>
+
+          <LayersControl.BaseLayer name="OpenTopoMap">
+            <TileLayer
+              attribution='OpenTopoMap'
+              url='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+            />
+          </LayersControl.BaseLayer>
+        </LayersControl>
 
         {capitals.map((town) => (
           <Marker
