@@ -100,6 +100,13 @@ function Map() {
             />
           </LayersControl.BaseLayer>
 
+          <LayersControl.BaseLayer name="Satellite">
+            <TileLayer
+              attribution='StadiaMaps'
+              url='https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg'
+            />
+          </LayersControl.BaseLayer>
+
           <LayersControl.BaseLayer name="OpenTopoMap">
             <TileLayer
               attribution='OpenTopoMap'
