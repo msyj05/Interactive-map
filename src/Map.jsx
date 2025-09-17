@@ -1,56 +1,59 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import SearchBar from './SearchBar.jsx';
-import WeatherWidget from './WeatherWidget.jsx';
-import MapController from './MapController.jsx'
+import React, { useState, useRef, useEffect } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  useMapEvents,
+  LayersControl,
+  Marker,
+  Popup,
+} from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import SearchBar from "./SearchBar.jsx";
+import WeatherWidget from "./WeatherWidget.jsx";
+import MapController from "./MapController.jsx";
 
 // Fix default marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Hardcoded list of regional capitals
-const capitals = [
-  { name: "Accra", lat: 5.6145, lon: -0.2056 },
-  { name: "Kumasi", lat: 6.6885, lon: -1.6244 },
-  { name: "Tamale", lat: 9.4000, lon: -0.8400 },
-  { name: "Sekondi-Takoradi", lat: 4.9433, lon: -1.7040 },
-  { name: "Sunyani", lat: 7.3333, lon: -2.3333 },
-  { name: "Cape Coast", lat: 5.1000, lon: -1.2500 },
-  { name: "Koforidua", lat: 6.0910, lon: -0.2600 },
-  { name: "Ho", lat: 6.6000, lon: 0.4700 },
-  { name: "Bolgatanga", lat: 10.7856, lon: -0.8514 },
-  { name: "Wa", lat: 10.0607, lon: -2.5019 },
-  { name: "Damongo", lat: 9.0833, lon: -1.8167 },
-  { name: "Techiman", lat: 7.5833, lon: -1.9333 },
-  { name: "Sefwi Wiawso", lat: 6.1969, lon: -2.4900 },
-  { name: "Nalerigu", lat: 10.5333, lon: -0.3833 },
-  { name: "Dambai", lat: 7.7833, lon: 0.2833 },
-  { name: "Goaso", lat: 6.8000, lon: -2.5167 },
-];
-
+// MapHoverClickListener listens for hover & click
+function MapHoverClickListener({ onHoverDebounced, onClickImmediate }) {
+  useMapEvents({
+    mousemove: (e) => {
+      const { lat, lng } = e.latlng;
+      onHoverDebounced(lat, lng);
+    },
+    click: (e) => {
+      const { lat, lng } = e.latlng;
+      onClickImmediate(lat, lng);
+    },
+  });
+  return null;
+}
 
 function Map() {
   const [hoveredTown, setHoveredTown] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
-  const [selectedPosition, setSelectedPosition] = useState([7.9465, -1.0232]);
+  const [selectedPosition, setSelectedPosition] = useState(null); // initially no marker
 
-  const handleMarkerHover = async (town) => {
-    setHoveredTown(town.name);
+  const fetchTimerRef = useRef(null);
 
+  const fetchWeatherImmediate = async (lat, lon, label) => {
+    setHoveredTown(label ?? "Loading...");
     try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${town.lat}&lon=${town.lon}&units=metric&appid=c6edca7f913ce1f9e177bd943a9113b7`
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=c6edca7f913ce1f9e177bd943a9113b7`
       );
-
-      if (!response.ok) throw new Error('Failed to fetch weather');
-
-      const data = await response.json();
+      if (!res.ok) throw new Error("Failed to fetch weather");
+      const data = await res.json();
 
       setWeatherData({
         temp: data.main.temp,
@@ -58,81 +61,110 @@ function Map() {
         humidity: data.main.humidity,
         windSpeed: data.wind.speed,
       });
-    } catch (error) {
-      console.error('Weather fetch failed:', error);
+
+      setHoveredTown(
+        data.name && data.name !== ""
+          ? data.name
+          : label ?? `Lat: ${lat.toFixed(2)}, Lng: ${lon.toFixed(2)}`
+      );
+    } catch (err) {
+      console.error("Weather fetch failed:", err);
       setWeatherData({
         temp: 28,
-        condition: 'Sunny',
+        condition: "Sunny",
         humidity: 50,
         windSpeed: 12,
       });
+      setHoveredTown(label ?? `Lat: ${lat.toFixed(2)}, Lng: ${lon.toFixed(2)}`);
     }
   };
 
-  //when user selects a town from search
-  const handleTownSelect = (position) => {
-    setSelectedPosition(position);
-    // Find town object by matching position
-    const town = capitals.find(
-      (t) => t.lat === position[0] && t.lon === position[1]
-    );
-    if (town) handleMarkerHover(town); // Fetch weather automatically
+  const scheduleFetchWeather = (lat, lon, label) => {
+    if (fetchTimerRef.current) {
+      clearTimeout(fetchTimerRef.current);
+      fetchTimerRef.current = null;
+    }
+    fetchTimerRef.current = setTimeout(() => {
+      fetchWeatherImmediate(lat, lon, label);
+      fetchTimerRef.current = null;
+    }, 1000);
   };
 
+  const handleMapClickImmediate = (lat, lon) => {
+    if (fetchTimerRef.current) {
+      clearTimeout(fetchTimerRef.current);
+      fetchTimerRef.current = null;
+    }
+    setSelectedPosition([lat, lon]); // show marker on click
+    fetchWeatherImmediate(lat, lon, "Selected Location");
+  };
 
+  const handleTownSelect = (position) => {
+    setSelectedPosition(position); // show marker on search
+    fetchWeatherImmediate(position[0], position[1], "Searched Location");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (fetchTimerRef.current) {
+        clearTimeout(fetchTimerRef.current);
+        fetchTimerRef.current = null;
+      }
+    };
+  }, []);
 
   return (
     <div className="map-container">
-      <SearchBar capitals={capitals} onSelectTown={handleTownSelect} />
+      <SearchBar onSelectTown={handleTownSelect} />
 
       <MapContainer
         center={[7.9465, -1.0232]}
         zoom={7}
-        style={{ height: '100vh', width: '100%' }}
+        style={{ height: "100vh", width: "100%" }}
       >
-        <MapController position={selectedPosition} />
+        <MapController position={selectedPosition ?? [7.9465, -1.0232]} />
 
-        <LayersControl position='topright' className='layers-control'>
+        <MapHoverClickListener
+          onHoverDebounced={(lat, lon) => scheduleFetchWeather(lat, lon)}
+          onClickImmediate={(lat, lon) => handleMapClickImmediate(lat, lon)}
+        />
+
+        <LayersControl position="topright" className="layers-control">
           <LayersControl.BaseLayer checked name="OpenStreetMap">
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; OpenStreetMap contributors'
+              attribution="&copy; OpenStreetMap contributors"
             />
           </LayersControl.BaseLayer>
 
           <LayersControl.BaseLayer name="Satellite">
             <TileLayer
-              attribution='StadiaMaps'
-              url='https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg'
+              attribution="StadiaMaps"
+              url="https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.jpg"
             />
           </LayersControl.BaseLayer>
 
           <LayersControl.BaseLayer name="OpenTopoMap">
             <TileLayer
-              attribution='OpenTopoMap'
-              url='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+              attribution="OpenTopoMap"
+              url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
             />
           </LayersControl.BaseLayer>
 
           <LayersControl.BaseLayer name="CartoDB Dark">
             <TileLayer
-              attribution='&copy; CartoDB contributors'
-              url='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              attribution="&copy; CartoDB contributors"
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
           </LayersControl.BaseLayer>
         </LayersControl>
 
-        {capitals.map((town) => (
-          <Marker
-            key={town.name}
-            position={[town.lat, town.lon]}
-            eventHandlers={{
-              mouseover: () => handleMarkerHover(town)
-            }}
-          >
-            <Popup>{town.name}</Popup>
+        {/* Render marker only if user selected/search a place */}
+        {selectedPosition && (
+          <Marker position={selectedPosition}>
+            <Popup>{hoveredTown ?? "Selected Location"}</Popup>
           </Marker>
-        ))}
+        )}
       </MapContainer>
 
       <WeatherWidget town={hoveredTown} weather={weatherData} />

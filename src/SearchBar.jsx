@@ -1,51 +1,70 @@
-import React, { useState } from 'react';
-import './SearchBar.css';
+import React, { useState } from "react";
+import "./SearchBar.css";
 
-function SearchBar({ capitals, onSelectTown }) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filteredTowns, setFilteredTowns] = useState([]);
+function SearchBar({ onSelectTown }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     const value = e.target.value;
     setSearchTerm(value);
 
-    if (value.trim() === '') {
-      setFilteredTowns([]);
+    if (value.trim() === "") {
+      setResults([]);
       return;
     }
 
-    // Filter town names that match
-    const results = capitals.filter((t) =>
-      t.name.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredTowns(results);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          value
+        )}&limit=5`
+      );
+      const data = await res.json();
+
+      // Map results to a simpler format
+      const locations = data.map((place) => ({
+        name: place.display_name,
+        lat: parseFloat(place.lat),
+        lon: parseFloat(place.lon),
+      }));
+
+      setResults(locations);
+    } catch (error) {
+      console.error("Search failed:", error);
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSelect = (town) => {
-    setSearchTerm(town.name);
-    setFilteredTowns([]);
-    onSelectTown([town.lat, town.lon]); // Pass position to Map.jsx
+  const handleSelect = (location) => {
+    setSearchTerm(location.name);
+    setResults([]);
+    onSelectTown([location.lat, location.lon]);
   };
 
   return (
     <div className="search-container">
       <input
         type="text"
-        placeholder="Search for a town..."
+        placeholder="Search for a place..."
         value={searchTerm}
         onChange={handleChange}
         className="search-input"
       />
 
-      {filteredTowns.length > 0 && (
+      {results.length > 0 && (
         <ul className="search-dropdown">
-          {filteredTowns.map((town) => (
+          {results.map((location, index) => (
             <li
-              key={town.name}
+              key={index}
               className="search-option"
-              onClick={() => handleSelect(town)}
+              onClick={() => handleSelect(location)}
             >
-              {town.name}
+              {location.name}
             </li>
           ))}
         </ul>

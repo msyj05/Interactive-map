@@ -45,3 +45,15 @@
 .weather-widget {
   animation: fadeIn 0.5s ease forwards;
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .weather-widget {
+  position: fixed !important;
+  top: auto;
+  bottom: 18px !important;
+  left: 10px !important;
+  }
+}
+  
+
