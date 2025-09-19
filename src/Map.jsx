@@ -100,8 +100,26 @@ function Map() {
   };
 
   const handleTownSelect = (position) => {
-    setSelectedPosition(position); // show marker on search
-    fetchWeatherImmediate(position[0], position[1], "Searched Location");
+    const [lat, lon] = position;
+
+  // Get the map instance manually using the leaflet object
+  const map = window.leafletMap; // We'll store the map globally in MapController
+  if (map) {
+    map.flyTo([lat, lon], 10, {
+      animate: true,
+      duration: 2,
+    });
+
+    map.once("moveend", () => {
+      // Only set marker after map finishes flying
+      setSelectedPosition([lat, lon]);
+    });
+  } else {
+    // fallback if map isn't ready yet
+    setSelectedPosition([lat, lon]);
+  }
+
+  fetchWeatherImmediate(lat, lon, "Searched Location");
   };
 
   useEffect(() => {

@@ -24,6 +24,8 @@ function SearchBar({ onSelectTown }) {
       );
       const data = await res.json();
 
+      
+
       // Map results to a simpler format
       const locations = data.map((place) => ({
         name: place.display_name,

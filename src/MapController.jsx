@@ -6,7 +6,10 @@ function MapController({ position }) {
 
   useEffect(() => {
     if (position) {
-      map.setView(position, 10); // 👈 recenters map only when position changes
+      map.flyTo(position, map.getZoom(), {
+        animate: true,
+        duration: 2, // seconds, adjust for speed
+      });
     }
   }, [position, map]);
 
